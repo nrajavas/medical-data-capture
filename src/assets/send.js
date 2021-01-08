@@ -10,13 +10,14 @@ app.use(cors());
 
 const fs = require("fs");
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }));
 
 app.post('/send-mail', function (req, res) {
   console.log(req.body.email);
   console.log(req.body.attachment);
-  sendMail(req.body.email, req.body.attachment);
+  //console.log(req.body.image);
+  sendMail(req.body.email, req.body.attachment, req.body.image);
   console.log("EMAIL SUCCESSFULLY SENT")
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "X-Requested-With");
@@ -29,7 +30,7 @@ app.listen(3000, function () {
 })
 
 
-function sendMail(emailInput, pathToAttachment) { 
+function sendMail(emailInput, pathToAttachment, imagePath) { 
   hardcodePath = ""
   attachment = fs.readFileSync(hardcodePath).toString("base64");
 
@@ -38,7 +39,7 @@ function sendMail(emailInput, pathToAttachment) {
     from: '',
     subject: 'Hello! Just testing out Sendgrid!',
     text: 'Just testing out Sendgrid!',
-    html: 'Just testing out Sendgrid!',
+    html: `There should be some text from ${imagePath} here.`,
     attachments: [
       {
         content: attachment,

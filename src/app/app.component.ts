@@ -55,9 +55,10 @@ export class AppComponent implements OnInit{
 
     console.log("Email Sent");
     console.log("Email: ", email);
-    console.log("Attachment Sent With Email: ", attachmentToSend)
+    console.log("Attachment Sent With Email: ", attachmentToSend);
+    console.log("Image sent", this.captures[0]);
     
-    return this.httpClient.post('http://localhost:3000/send-mail', {"email": email, "attachment": attachmentToSend}, {headers:{'Content-Type': 'application/json', 'Accept': 'application/json'}, responseType: 'text'}).subscribe();
+    return this.httpClient.post('http://localhost:3000/send-mail', {"email": email, "attachment": attachmentToSend, "image": this.captures[0]}, {headers:{'Content-Type': 'application/json', 'Accept': 'application/json'}, responseType: 'text'}).subscribe();
     
   }
 
