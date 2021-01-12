@@ -23,6 +23,8 @@ app.post('/send-mail', function (req, res) {
   console.log(req.body.attachment);
   //console.log(req.body.image);
   uploadImage(req.body.image);
+  console.log("Retrieved attachment...");
+  retrieveAttachment();
   sendMail(req.body.email, req.body.attachment, req.body.image);
   console.log("EMAIL SUCCESSFULLY SENT")
   res.header("Access-Control-Allow-Origin", "*");
@@ -50,23 +52,34 @@ function uploadImage(userImage) {
    });
 }
 
+function retrieveAttachment() {
+  var params = {
+    Bucket: bucketName, 
+    Key: "user_upload.jpg"
+   };
+   s3.getObject(params, function(err, data) {
+     if (err) console.log(err, err.stack);
+     else     console.log(data);
+   });
+}
+
 
 function sendMail(emailInput, pathToAttachment, imagePath) { 
   hardcodePath = ""
   attachment = fs.readFileSync(hardcodePath).toString("base64");
+  userImage = imagePath.replace(/^data:image\/\w+;base64,/, "");
 
   const msg = {
     to: `${emailInput}`,
     from: '',
     subject: 'Hello! Just testing out Sendgrid!',
     text: 'Just testing out Sendgrid!',
-    html: `There should be some text from ${imagePath} here.`,
+    html: '<img src="cid:myimagecid"/>',
     attachments: [
       {
-        content: attachment,
-        filename: "attachment.pdf",
-        type: "application/pdf",
-        disposition: "attachment"
+        content: userImage,
+        filename: "imageattachment.png",
+        content_id: "myimagecid",
       }
     ]
   };
