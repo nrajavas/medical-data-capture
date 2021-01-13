@@ -8,8 +8,6 @@ const app = express();
 const cors = require('cors');
 app.use(cors());
 
-const fs = require("fs");
-
 var AWS = require("aws-sdk");
 var s3 = new AWS.S3({apiVersion: '2006-03-01'});
 
@@ -20,11 +18,6 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true, parameterLimit: 5
 
 app.post('/send-mail', function (req, res) {
   console.log(req.body.email);
-  console.log(req.body.attachment);
-  //console.log(req.body.image);
-  uploadImage(req.body.image);
-  console.log("Retrieved attachment...");
-  retrieveAttachment();
   sendMail(req.body.email, req.body.attachment, req.body.image);
   console.log("EMAIL SUCCESSFULLY SENT")
   res.header("Access-Control-Allow-Origin", "*");
@@ -65,24 +58,48 @@ function retrieveAttachment() {
 
 
 function sendMail(emailInput, pathToAttachment, imagePath) { 
-  hardcodePath = ""
-  attachment = fs.readFileSync(hardcodePath).toString("base64");
-  userImage = imagePath.replace(/^data:image\/\w+;base64,/, "");
 
-  const msg = {
+  var msg = {
     to: `${emailInput}`,
     from: '',
     subject: 'Hello! Just testing out Sendgrid!',
     text: 'Just testing out Sendgrid!',
-    html: '<img src="cid:myimagecid"/>',
-    attachments: [
-      {
-        content: userImage,
-        filename: "imageattachment.png",
-        content_id: "myimagecid",
-      }
-    ]
+    html: 'There is no attachment!',
   };
+
+  if (pathToAttachment !== "") {
+    msg = {
+      to: `${emailInput}`,
+      from: '',
+      subject: 'Hello! Just testing out Sendgrid!',
+      text: 'Just testing out Sendgrid!',
+      html: '<img src="cid:myimagecid"/>',
+      attachments: [
+        {
+          content: pathToAttachment.replace(/^data:image\/\w+;base64,/, ""),
+          filename: "attachment.png",
+          type: "image/png",
+          disposition: "attachment"
+        }
+      ]
+    };
+  } else if (imagePath !== "") {
+    userImage = imagePath.replace(/^data:image\/\w+;base64,/, "");
+    msg = {
+      to: `${emailInput}`,
+      from: '',
+      subject: 'Hello! Just testing out Sendgrid!',
+      text: 'Just testing out Sendgrid!',
+      html: '<img src="cid:myimagecid"/>',
+      attachments: [
+        {
+          content: userImage,
+          filename: "imageattachment.png",
+          content_id: "myimagecid",
+        }
+      ]
+    };
+  }
   
   sgMail
     .send(msg)
@@ -96,4 +113,5 @@ function sendMail(emailInput, pathToAttachment, imagePath) {
         console.log(pathToAttachment);
       }
     });
+    
 }
