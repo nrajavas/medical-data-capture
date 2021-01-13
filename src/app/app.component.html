@@ -311,7 +311,8 @@
   <br>
   <br>
 
-  <input (change)="sendAttachment(attachment.value)" #attachment type="file" />
+  <input (change)="sendAttachment($event)" #attachment type="file" />
+  <img src="" height="200" alt="Image preview...">
 
   <br>
   <br>

@@ -1,16 +1,13 @@
 import * as sendGrid from '@sendgrid/mail';
 
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
 
-import { ApiService } from './api.service';
-import { catchError } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 
 const SENDGRID_API_KEY = "";
 sendGrid.setApiKey(SENDGRID_API_KEY);
 
-let attachmentToSend: string;
+var attachmentToSend = "";
 
 
 @Component({
@@ -55,18 +52,30 @@ export class AppComponent implements OnInit{
 
     console.log("Email Sent");
     console.log("Email: ", email);
-    console.log("Attachment Sent With Email: ", attachmentToSend)
-    
-    return this.httpClient.post('http://localhost:3000/send-mail', {"email": email, "attachment": attachmentToSend}, {headers:{'Content-Type': 'application/json', 'Accept': 'application/json'}, responseType: 'text'}).subscribe();
+
+    if (this.captures[0]) {
+      return this.httpClient.post('http://localhost:3000/send-mail', {"email": email, "attachment": attachmentToSend, "image": this.captures[0]}, {headers:{'Content-Type': 'application/json', 'Accept': 'application/json'}, responseType: 'text'}).subscribe();
+    } else {
+      return this.httpClient.post('http://localhost:3000/send-mail', {"email": email, "attachment": attachmentToSend, "image": ""}, {headers:{'Content-Type': 'application/json', 'Accept': 'application/json'}, responseType: 'text'}).subscribe();
+    }
     
   }
 
-  sendAttachment(attachment: string) {
+  sendAttachment(event: any) {
     
-    attachmentToSend = attachment;
-    console.log("Attachment Button Clicked");
-    console.log("Attachment: ", attachment);
-    console.log("Attachment To Send: ", attachmentToSend);
+    const preview = document.querySelector('img');
+    const file = event.target.files[0];
+    const reader = new FileReader();
+
+    reader.addEventListener("load", function () {
+      // convert image file to base64 string
+      preview.src = reader.result.toString();
+      attachmentToSend = reader.result.toString();
+    }, false);
+
+    if (file) {
+      reader.readAsDataURL(file);
+    }
 
   }
 

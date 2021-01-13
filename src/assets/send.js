@@ -8,15 +8,17 @@ const app = express();
 const cors = require('cors');
 app.use(cors());
 
-const fs = require("fs");
+var AWS = require("aws-sdk");
+var s3 = new AWS.S3({apiVersion: '2006-03-01'});
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+var bucketName = '';
+
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }));
 
 app.post('/send-mail', function (req, res) {
   console.log(req.body.email);
-  console.log(req.body.attachment);
-  sendMail(req.body.email, req.body.attachment);
+  sendMail(req.body.email, req.body.attachment, req.body.image);
   console.log("EMAIL SUCCESSFULLY SENT")
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "X-Requested-With");
@@ -28,26 +30,76 @@ app.listen(3000, function () {
   console.log('LISTENING on port 3000');
 })
 
+function uploadImage(userImage) {
+  buf = Buffer.from(userImage.replace(/^data:image\/\w+;base64,/, ""),'base64');
+  var params = {
+    Body: buf, 
+    Bucket: bucketName, 
+    Key: "user_upload.jpg",
+    ContentEncoding: 'base64',
+    ContentType: 'image/jpeg'
+   };
+   s3.putObject(params, function(err, data) {
+     if (err) console.log(err, err.stack);
+     else     console.log(data);
+   });
+}
 
-function sendMail(emailInput, pathToAttachment) { 
-  hardcodePath = ""
-  attachment = fs.readFileSync(hardcodePath).toString("base64");
+function retrieveAttachment() {
+  var params = {
+    Bucket: bucketName, 
+    Key: "user_upload.jpg"
+   };
+   s3.getObject(params, function(err, data) {
+     if (err) console.log(err, err.stack);
+     else     console.log(data);
+   });
+}
 
-  const msg = {
+
+function sendMail(emailInput, pathToAttachment, imagePath) { 
+
+  var msg = {
     to: `${emailInput}`,
     from: '',
     subject: 'Hello! Just testing out Sendgrid!',
     text: 'Just testing out Sendgrid!',
-    html: 'Just testing out Sendgrid!',
-    attachments: [
-      {
-        content: attachment,
-        filename: "attachment.pdf",
-        type: "application/pdf",
-        disposition: "attachment"
-      }
-    ]
+    html: 'There is no attachment!',
   };
+
+  if (pathToAttachment !== "") {
+    msg = {
+      to: `${emailInput}`,
+      from: '',
+      subject: 'Hello! Just testing out Sendgrid!',
+      text: 'Just testing out Sendgrid!',
+      html: '<img src="cid:myimagecid"/>',
+      attachments: [
+        {
+          content: pathToAttachment.replace(/^data:image\/\w+;base64,/, ""),
+          filename: "attachment.png",
+          type: "image/png",
+          disposition: "attachment"
+        }
+      ]
+    };
+  } else if (imagePath !== "") {
+    userImage = imagePath.replace(/^data:image\/\w+;base64,/, "");
+    msg = {
+      to: `${emailInput}`,
+      from: '',
+      subject: 'Hello! Just testing out Sendgrid!',
+      text: 'Just testing out Sendgrid!',
+      html: '<img src="cid:myimagecid"/>',
+      attachments: [
+        {
+          content: userImage,
+          filename: "imageattachment.png",
+          content_id: "myimagecid",
+        }
+      ]
+    };
+  }
   
   sgMail
     .send(msg)
@@ -61,4 +113,5 @@ function sendMail(emailInput, pathToAttachment) {
         console.log(pathToAttachment);
       }
     });
+    
 }
