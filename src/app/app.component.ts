@@ -25,10 +25,12 @@ export class AppComponent implements OnInit{
   public canvas: ElementRef;
 
   public captures: Array<any>;
+  public numOfPics: number;
 
   constructor(private httpClient: HttpClient) {
 
     this.captures = [];
+    this.numOfPics = 0;
 
   }
 
@@ -46,6 +48,7 @@ export class AppComponent implements OnInit{
   public capture() {
       var context = this.canvas.nativeElement.getContext("2d").drawImage(this.video.nativeElement, 0, 0, 640, 480);
       this.captures.push(this.canvas.nativeElement.toDataURL("image/png"));
+      this.numOfPics += 1;
   }
 
   sendEmail(email: string) {
@@ -54,7 +57,7 @@ export class AppComponent implements OnInit{
     console.log("Email: ", email);
 
     if (this.captures[0]) {
-      return this.httpClient.post('http://localhost:3000/send-mail', {"email": email, "attachment": attachmentToSend, "image": this.captures[0]}, {headers:{'Content-Type': 'application/json', 'Accept': 'application/json'}, responseType: 'text'}).subscribe();
+      return this.httpClient.post('http://localhost:3000/send-mail', {"email": email, "attachment": attachmentToSend, "image": this.captures[this.numOfPics - 1]}, {headers:{'Content-Type': 'application/json', 'Accept': 'application/json'}, responseType: 'text'}).subscribe();
     } else {
       return this.httpClient.post('http://localhost:3000/send-mail', {"email": email, "attachment": attachmentToSend, "image": ""}, {headers:{'Content-Type': 'application/json', 'Accept': 'application/json'}, responseType: 'text'}).subscribe();
     }
